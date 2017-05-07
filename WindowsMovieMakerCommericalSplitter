@@ -1,0 +1,216 @@
+#python 3
+#list files in directory
+import os, subprocess,time, pyperclip, datetime
+import pyautogui as pag
+pag.FAILSAFE = True
+#====================================================================
+#creating list of files to not work on because they've been completed.
+#====================================================================
+n = 0
+def countdown(n):
+    while n >0:
+        tim = 'Timer: ' + str(n)+ ' '
+        print(tim, end='')
+        print('\b' * len(tim), end='',flush=True)
+        time.sleep(1)
+        n -= 1
+    #return n
+print('Waiting 5 seconds before starting')
+countdown(5)
+pag.keyDown('win')
+pag.press('up')
+pag.press('right')
+pag.keyUp('win')
+print('reading converted files')
+with open("C:\\Python\\Python36-32\\recordedTVSplitter\\ConvertedFiles.txt","r") as fl:
+    compFiles = fl.read()
+    compFiles = compFiles.split('\n')
+#====================================================================
+#Run through files
+#====================================================================
+fList = os.listdir('E:\Recorded TV')
+for file in fList:
+    if 'TempRec' not in file and file not in compFiles:
+        
+        #====================================================================
+        #Comparing files in var fList against the text file of converted files
+        #====================================================================
+        pag.press('volumemute')
+        print ('Searching for... ' + file )
+        subprocess.Popen(r'explorer select,"E:\Recorded TV"')
+        countdown(1)
+        pag.press(['tab']*5)
+        pag.press('right')
+        #New procedure. Cycle through files to match what the program has identified variable file
+        #Get file name
+        countdown(1)
+        pag.press('f2')
+        pag.keyDown('ctrl')
+        pag.press('c')
+        pag.keyUp('ctrl')
+        Fname = pyperclip.paste()
+        pag.press('esc')
+        countdown(1)
+        while Fname not in file:
+            pag.press('right')
+            pag.press('f2')
+            pag.keyDown('ctrl')
+            pag.press('c')
+            pag.keyUp('ctrl')
+            Fname = pyperclip.paste()
+            pag.press('esc')
+        #print(file)
+        Fname = file.split("_")[0]
+        #====================================================================
+        #get episode name
+        #====================================================================
+        pag.press('apps') #opens options menu
+        countdown(2)
+        pag.press('r')
+        print('Tabbing to find Episode Name')
+        countdown(1)
+        pag.press(['tab']* 5)
+        pag.press(['right']* 2 )
+        countdown(1) #details tab is pulled up
+        #Find Episode Name
+        pag.press('tab')
+        pag.press(['up']*30)
+        pag.press(['down']*2)
+
+        #Copy Episode Name to variable episodeName
+        countdown(3)
+        pag.keyDown('ctrl')
+        pag.press('c')
+        pag.keyUp('ctrl')
+        episodeName = pyperclip.paste()
+        countdown(1)
+        pag.press(['enter']*2)
+        #switch to Windows Movie Maker
+        print('Closing Recorded TV Folder...')
+        pag.keyDown('alt')
+        pag.press('f4')
+        pag.keyUp('alt')
+        countdown(3)
+        print('Opening Windows Movie Maker...')
+        subprocess.Popen("C:\\Program Files (x86)\\Windows Live\\Photo Gallery\\MovieMaker.exe")
+        print('Waiting 5 seconds before starting')
+        countdown(5)
+        print('moving to the left side of the screen')
+        pag.keyDown('win')
+        pag.press('up')
+        pag.press('left')
+        pag.keyUp('win')
+        #open file in MM- with keys
+        print('Opening ' + file)
+        pag.press('alt')
+        pag.press('h')
+        pag.press('p')
+        #go to recorded TV folder
+        countdown(4)
+        pag.typewrite("e:\\recorded tv\\" + file)
+        pag.press('enter')
+        countdown(2)
+        #ready to convert video
+        #SaveProjectAs
+        print('Saving file as... ' + Fname)
+        
+        pag.press('alt')
+        pag.press('f')
+        pag.press('a')
+        #generate filename
+        countdown(2)
+        Fname = Fname.replace("Marvel's","")
+        Fname = Fname.replace("Marvels","")
+        pag.typewrite(Fname + ' ~ ' + episodeName)
+        pag.press('enter')
+        print('Beginning splitter program...')
+        print('Beginning conversion: ' + str(datetime.datetime.now().time()))
+        #==============================================================
+        #Run Splitter program
+        #section - identify act / commercial breaks
+        #function to return true / false statement
+        def isBlack(x,y,r,g,b):
+            return pag.pixelMatchesColor(x,y, (r, g, b)) 
+        x = 0
+        #==============================================================
+        fstat = os.stat("E:\\recorded tv\\" + str(file))
+        sz = fstat.st_size
+        sz = sz / 1000000000
+        #gb = round(sz,2)
+        #print('File size is ' + gb + ' GB')
+        if sz > 3:
+            stp = 64000
+        else:
+            stp = 32000
+        while x <= stp:
+            if isBlack(60,200,2,0,2) and isBlack(60,300,2,0,2) and isBlack(60,400,2,0,2) and isBlack(220,200,2,0,2) and isBlack(220,300,2,0,2) and isBlack(220,400,2,0,2) and isBlack(430,200,2,0,2) and isBlack(430,300,2,0,2) and isBlack(430,400,2,0,2):
+                print()
+                print('Found all black pixels at this point')
+                pag.press('m') #click "M" to split
+                pag.press('space') #space to restart
+                print('Letting video play for 2m 20s after all black break was found')
+                countdown(120) #wait 1 second for the screen to progress
+                pag.click(215,15)
+                pag.press('space') # space to unpause
+            elif isBlack(60,200,0,0,0) and isBlack(60,300,0,0,0) and isBlack(60,400,0,0,0) and isBlack(220,200,0,0,0) and isBlack(220,300,0,0,0) and isBlack(220,400,0,0,0) and isBlack(430,200,0,0,0) and isBlack(430,300,0,0,0) and isBlack(430,400,0,0,0):
+                print()
+                print('Found all black pixels at this point: ')
+                pag.press('m') #click "M" to split
+                pag.press('space') #space to restart
+                print('Letting video play for 2m 20s after all black break was found')
+                countdown(120) #wait 1 second for the screen to progress
+                pag.click(215,15)
+                pag.press('space') # space to unpause
+            else:
+                comm = 'Continuing frame-by-frame search. ' + str(x)
+                print(comm,end='')
+                print('\b' * len(comm), end='',flush=True)
+            pag.press('l') #click "L" to split
+            x = x + 1
+            #==============================================================
+            #This section simply clicks the window to the front during automated process
+            #==============================================================
+            if x % 100 == 0:
+                pag.click(215,15)
+
+        #==============================================================
+        #once done, save file & move on to the next
+        #==============================================================
+        #add file to list
+        #==============================================================
+        print('Show name: ' + Fname)
+        with open ("C:\\Python\\Python36-32\\recordedTVSplitter\\ConvertedFiles.txt",'a') as fl:
+            fl.write(file + '\n')
+        print('Converision complete: ' + str(datetime.datetime.now().time()))
+        #==============================================================
+        #mm - save file
+        #==============================================================
+        pag.keyDown('ctrl')
+        pag.press('s')
+        pag.keyUp('ctrl')
+        countdown(2)
+        #==============================================================
+        #alt F N = New project
+        #==============================================================
+        pag.keyDown('alt')
+        pag.press('f')
+        pag.press('n')
+        pag.keyUp('alt')
+        countdown(1)
+        #==============================================================
+        #close Win MM
+        #==============================================================
+        pag.keyDown('alt')
+        pag.press('f4')
+        pag.keyUp('alt')
+        print('Next file...')
+        print()
+        pag.press('volumemute')
+        #alt tab back to recorded TV folder
+        countdown(1)
+        
+    elif 'TempRec' in file:
+        print(file + ' is not a file')
+    else:
+        print(file + ' has already been converted')
+       
